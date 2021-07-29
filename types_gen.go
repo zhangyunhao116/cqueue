@@ -32,18 +32,15 @@ func main() {
 		data = data[strings.Index(data, ")\n")+1:]
 		// Common cases.
 		data = strings.Replace(data, "atomic.StorePointer((*unsafe.Pointer)(ent.data), nil)", "", -1)
-		data = strings.Replace(data, "NewPointer", "New"+upper, -1)
+		data = strings.Replace(data, "NewLSCQPointer", "NewLSCQ"+upper, -1)
 		data = strings.Replace(data, "data unsafe.Pointer", "data "+lower, -1)
 		data = strings.Replace(data, "data  unsafe.Pointer", "data "+lower, -1)
-		data = strings.Replace(data, "pointerSCQ", lower+"SCQ", -1)
-		data = strings.Replace(data, "PointerSCQ", upper+"SCQ", -1)
-		data = strings.Replace(data, "pointerQueue", lower+"Queue", -1)
-		data = strings.Replace(data, "PointerQueue", upper+"Queue", -1)
+		data = strings.Replace(data, "SCQPointer", "SCQ"+upper, -1)
+		data = strings.Replace(data, "LSCQPointer", upper+"Queue", -1)
 		data = strings.Replace(data, "scqNodePointer", "scqNode"+upper, -1)
 		data = strings.Replace(data, "compareAndSwapSCQNodePointer", "compareAndSwapSCQNode"+upper, -1)
 		data = strings.Replace(data, "loadSCQNodePointer", "loadSCQNode"+upper, -1)
-		// // Add the special case.
-		// data = data + strings.Replace(lengthFunction, "Int64Set", upper+"Set", 1)
+		data = strings.Replace(data, "pointerSCQPool", lower+"SCQPool", -1)
 		w.WriteString(data)
 		w.WriteString("\r\n")
 	}

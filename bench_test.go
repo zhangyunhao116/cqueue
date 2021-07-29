@@ -32,7 +32,7 @@ func (data *faa) Dequeue() (uint64, bool) {
 func BenchmarkDefault(b *testing.B) {
 	all := []benchTask{{
 		name: "LSCQ", New: func() uint64queue {
-			return NewUint64()
+			return NewLSCQUint64()
 		}}}
 	// all = append(all, benchTask{
 	// 	name: "LinkedQueue",

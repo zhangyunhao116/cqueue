@@ -9,7 +9,7 @@ import (
 )
 
 func TestBoundedQueue(t *testing.T) {
-	q := NewUint64SCQ()
+	q := NewSCQUint64()
 	s := skipset.NewUint64()
 
 	// Dequeue empty queue.
@@ -125,7 +125,7 @@ func TestBoundedQueue(t *testing.T) {
 
 func TestUnboundedQueue(t *testing.T) {
 	// MPMC correctness.
-	q := NewUint64()
+	q := NewLSCQUint64()
 	var wg sync.WaitGroup
 	s1 := skipset.NewUint64()
 	s2 := skipset.NewUint64()

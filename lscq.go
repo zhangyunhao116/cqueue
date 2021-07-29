@@ -10,24 +10,24 @@ import (
 
 var pointerSCQPool = sync.Pool{
 	New: func() interface{} {
-		return NewPointerSCQ()
+		return NewSCQPointer()
 	},
 }
 
-type PointerQueue struct {
-	head *pointerSCQ
+type LSCQPointer struct {
+	head *SCQPointer
 	_    [cacheLineSize - unsafe.Sizeof(new(uintptr))]byte
-	tail *pointerSCQ
+	tail *SCQPointer
 }
 
-func NewPointer() *PointerQueue {
-	q := NewPointerSCQ()
-	return &PointerQueue{head: q, tail: q}
+func NewLSCQPointer() *LSCQPointer {
+	q := NewSCQPointer()
+	return &LSCQPointer{head: q, tail: q}
 }
 
-func (q *PointerQueue) Dequeue() (data unsafe.Pointer, ok bool) {
+func (q *LSCQPointer) Dequeue() (data unsafe.Pointer, ok bool) {
 	for {
-		cq := (*pointerSCQ)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&q.head))))
+		cq := (*SCQPointer)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&q.head))))
 		data, ok = cq.Dequeue()
 		if ok {
 			return
@@ -53,9 +53,9 @@ func (q *PointerQueue) Dequeue() (data unsafe.Pointer, ok bool) {
 	}
 }
 
-func (q *PointerQueue) Enqueue(data unsafe.Pointer) bool {
+func (q *LSCQPointer) Enqueue(data unsafe.Pointer) bool {
 	for {
-		cq := (*pointerSCQ)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&q.tail))))
+		cq := (*SCQPointer)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&q.tail))))
 		nex := atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&cq.next)))
 		if nex != nil {
 			// Help move cq.next into tail.
@@ -72,7 +72,7 @@ func (q *PointerQueue) Enqueue(data unsafe.Pointer) bool {
 			cq.mu.Unlock()
 			continue
 		}
-		ncq := pointerSCQPool.Get().(*pointerSCQ) // create a new queue
+		ncq := pointerSCQPool.Get().(*SCQPointer) // create a new queue
 		ncq.Enqueue(data)
 		// Try Add this queue into cq.next.
 		if atomic.CompareAndSwapPointer((*unsafe.Pointer)(unsafe.Pointer(&cq.next)), nil, unsafe.Pointer(ncq)) {
@@ -90,7 +90,20 @@ func (q *PointerQueue) Enqueue(data unsafe.Pointer) bool {
 	}
 }
 
-type pointerSCQ struct {
+func NewSCQPointer() *SCQPointer {
+	ring := new([scqsize]scqNodePointer)
+	for i := range ring {
+		ring[i].flags = 1<<63 + 1<<62 // newSCQFlags(true, true, 0)
+	}
+	return &SCQPointer{
+		head:      scqsize,
+		tail:      scqsize,
+		threshold: -1,
+		ring:      ring,
+	}
+}
+
+type SCQPointer struct {
 	_         [cacheLineSize]byte
 	head      uint64
 	_         [cacheLineSize - unsafe.Sizeof(new(uint64))]byte
@@ -98,7 +111,7 @@ type pointerSCQ struct {
 	_         [cacheLineSize - unsafe.Sizeof(new(uint64))]byte
 	threshold int64
 	_         [cacheLineSize - unsafe.Sizeof(new(uint64))]byte
-	next      *pointerSCQ
+	next      *SCQPointer
 	ring      *[scqsize]scqNodePointer
 	mu        sync.Mutex
 }
@@ -108,30 +121,7 @@ type scqNodePointer struct {
 	data  unsafe.Pointer
 }
 
-func NewPointerSCQ() *pointerSCQ {
-	ring := new([scqsize]scqNodePointer)
-	for i := range ring {
-		ring[i].flags = 1<<63 + 1<<62 // newSCQFlags(true, true, 0)
-	}
-	return &pointerSCQ{
-		head:      scqsize,
-		tail:      scqsize,
-		threshold: -1,
-		ring:      ring,
-	}
-}
-
-func (q *pointerSCQ) reset() {
-	q.tail = scqsize
-	q.head = scqsize
-	q.threshold = -1
-	q.next = nil
-	for i := range q.ring {
-		q.ring[i].flags = 1<<63 + 1<<62
-	}
-}
-
-func (q *pointerSCQ) Enqueue(data unsafe.Pointer) bool {
+func (q *SCQPointer) Enqueue(data unsafe.Pointer) bool {
 	// If TAIL >= HEAD + scqsize, means this queue is full.
 	if uint64Get63(atomic.LoadUint64(&q.tail)) >= atomic.LoadUint64(&q.head)+scqsize {
 		return false
@@ -179,7 +169,7 @@ func (q *pointerSCQ) Enqueue(data unsafe.Pointer) bool {
 	}
 }
 
-func (q *pointerSCQ) Dequeue() (data unsafe.Pointer, ok bool) {
+func (q *SCQPointer) Dequeue() (data unsafe.Pointer, ok bool) {
 	if atomic.LoadInt64(&q.threshold) < 0 {
 		// Empty queue.
 		return
@@ -225,7 +215,7 @@ func (q *pointerSCQ) Dequeue() (data unsafe.Pointer, ok bool) {
 	}
 }
 
-func (q *pointerSCQ) fixstate(originalHead uint64) {
+func (q *SCQPointer) fixstate(originalHead uint64) {
 	for {
 		head := atomic.LoadUint64(&q.head)
 		if originalHead < head {
