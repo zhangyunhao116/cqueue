@@ -1,5 +1,5 @@
-github.com/zhangyunhao116/atomicx v0.0.0-20210727162021-916658e75bb4 h1:LNX98clJtFSLF1HoxcQZ2rukb652ZG/wRbZnS37MfHk=
-github.com/zhangyunhao116/atomicx v0.0.0-20210727162021-916658e75bb4/go.mod h1:KLbzCKd7lkkRUrCLFR4IAkE5NH5C8cP8eeWpQw2NBgE=
+github.com/zhangyunhao116/atomicx v0.0.0-20210729150440-b35331524cdc h1:CsnM2GWQB+fN9u1KDdU0dLqJsUvTQ7B5ltZC9L1bQfU=
+github.com/zhangyunhao116/atomicx v0.0.0-20210729150440-b35331524cdc/go.mod h1:KLbzCKd7lkkRUrCLFR4IAkE5NH5C8cP8eeWpQw2NBgE=
 github.com/zhangyunhao116/fastrand v0.1.0 h1:NBvafu24zKd6taYBVtw9MWyxkK/HSSVnFtxnPAprasw=
 github.com/zhangyunhao116/fastrand v0.1.0/go.mod h1:0v5KgHho0VE6HU192HnY15de/oDS8UrbBChIFjIhBtc=
 github.com/zhangyunhao116/sbconv v0.2.1 h1:9Z43QFpnkYNjCrRz8UR9ShVRVQ0OG5VtLKQ3mAL5zjU=

@@ -91,6 +91,19 @@ func (q *LSCQUint64) Enqueue(data uint64) bool {
 	}
 }
 
+func NewSCQUint64() *SCQUint64 {
+	ring := new([scqsize]scqNodeUint64)
+	for i := range ring {
+		ring[i].flags = 1<<63 + 1<<62 // newSCQFlags(true, true, 0)
+	}
+	return &SCQUint64{
+		head:      scqsize,
+		tail:      scqsize,
+		threshold: -1,
+		ring:      ring,
+	}
+}
+
 type SCQUint64 struct {
 	_         [cacheLineSize]byte
 	head      uint64
@@ -107,19 +120,6 @@ type SCQUint64 struct {
 type scqNodeUint64 struct {
 	flags uint64 // isSafe 1-bit + isEmpty 1-bit + cycle 62-bit
 	data  uint64
-}
-
-func NewSCQUint64() *SCQUint64 {
-	ring := new([scqsize]scqNodeUint64)
-	for i := range ring {
-		ring[i].flags = 1<<63 + 1<<62 // newSCQFlags(true, true, 0)
-	}
-	return &SCQUint64{
-		head:      scqsize,
-		tail:      scqsize,
-		threshold: -1,
-		ring:      ring,
-	}
 }
 
 func (q *SCQUint64) Enqueue(data uint64) bool {

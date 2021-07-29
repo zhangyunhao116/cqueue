@@ -37,25 +37,13 @@ func BenchmarkDefault(b *testing.B) {
 	// all = append(all, benchTask{
 	// 	name: "LinkedQueue",
 	// 	New: func() uint64queue {
-	// 		return linkedq.New()
+	// 		return NewLQUint64()
 	// 	},
 	// })
 	// all = append(all, benchTask{
 	// 	name: "MSQueue",
 	// 	New: func() uint64queue {
-	// 		return msq.New()
-	// 	},
-	// })
-	// all = append(all, benchTask{
-	// 	name: "FAA",
-	// 	New: func() uint64queue {
-	// 		return new(faa)
-	// 	},
-	// })
-	// all = append(all, benchTask{
-	// 	name: "channel",
-	// 	New: func() uint64queue {
-	// 		return newChannelQ(scqsize)
+	// 		return NewMSQUint64()
 	// 	},
 	// })
 	benchEnqueueOnly(b, all)
