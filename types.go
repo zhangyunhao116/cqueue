@@ -123,11 +123,6 @@ type scqNodeUint64 struct {
 }
 
 func (q *SCQUint64) Enqueue(data uint64) bool {
-	// If TAIL >= HEAD + scqsize, means this queue is full.
-	if uint64Get63(atomic.LoadUint64(&q.tail)) >= atomic.LoadUint64(&q.head)+scqsize {
-		return false
-	}
-
 	for {
 		// Increment the TAIL, try to occupy an entry.
 		tailvalue := atomic.AddUint64(&q.tail, 1)
