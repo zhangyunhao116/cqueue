@@ -1,0 +1,1 @@
+go run types_gen.go &&  go test -bench=. -cpu=1,4,8,16,100 -count=10 -run=NOTEST -benchtime=1000000x

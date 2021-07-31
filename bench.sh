@@ -1,1 +1,1 @@
-go run types_gen.go && go test -bench=. -cpu=1,2,4,8,16,100 -count=10 -run=NOTEST -benchtime=1000000x
+benchok -run="sh .bench.sh > base.txt" -maxerr=15 -ignore="DequeueOnlyEmpty" base.txt
