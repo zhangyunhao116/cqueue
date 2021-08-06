@@ -4,6 +4,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"unsafe"
 
 	"github.com/zhangyunhao116/fastrand"
 	"github.com/zhangyunhao116/skipset"
@@ -169,7 +170,7 @@ func TestUnboundedQueue(t *testing.T) {
 	}
 }
 
-func TestCorrentnessUnique(t *testing.T) {
+func TestUniqueUint64(t *testing.T) {
 	const (
 		cpucount = 16
 	)
@@ -183,12 +184,11 @@ func TestCorrentnessUnique(t *testing.T) {
 		shared[i*int(cacheLineSize)] = uint64(i) * 1 << 35
 		sharedset[i] = skipset.NewUint64()
 	}
-
 	for i := 0; i < cpucount; i++ {
 		wg.Add(1)
 		cpuid := uint64(i)
 		go func() {
-			for j := 0; j < scqsize*9; j++ {
+			for j := 0; j < scqsize*6; j++ {
 				if !q.Enqueue(atomic.AddUint64(&shared[cpuid*uint64(cacheLineSize)], 1)) {
 					panic("invalid")
 				}
@@ -196,6 +196,49 @@ func TestCorrentnessUnique(t *testing.T) {
 				if !ok {
 					panic("invalid")
 				}
+				datashared := data >> 35
+				if !sharedset[datashared].Add(data) {
+					panic("invalid")
+				}
+			}
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+}
+
+func TestUniquePointer(t *testing.T) {
+	type dummy struct {
+		v uint64
+	}
+	const (
+		cpucount = 16
+	)
+	var (
+		wg        sync.WaitGroup
+		shared    [cpucount * cacheLineSize]uint64
+		sharedset [cpucount]*skipset.Uint64Set
+	)
+	q := NewLSCQPointer()
+	for i := 0; i < cpucount; i++ {
+		shared[i*int(cacheLineSize)] = uint64(i) * 1 << 35
+		sharedset[i] = skipset.NewUint64()
+	}
+	for i := 0; i < cpucount; i++ {
+		wg.Add(1)
+		cpuid := uint64(i)
+		go func() {
+			for j := 0; j < scqsize*6; j++ {
+				tmp := new(dummy)
+				tmp.v = atomic.AddUint64(&shared[cpuid*uint64(cacheLineSize)], 1)
+				if !q.Enqueue(unsafe.Pointer(tmp)) {
+					panic("invalid")
+				}
+				datap, ok := q.Dequeue()
+				if !ok {
+					panic("invalid")
+				}
+				data := (*dummy)(datap).v
 				datashared := data >> 35
 				if !sharedset[datashared].Add(data) {
 					panic("invalid")

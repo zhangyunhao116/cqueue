@@ -137,7 +137,7 @@ func (q *SCQUint64) Enqueue(data uint64) bool {
 		cycleT := T / scqsize
 	eqretry:
 		// Enqueue do not need data, if this entry is empty, we can assume the data is also empty.
-		entFlags := atomic.LoadUint64((*uint64)(unsafe.Pointer(entAddr)))
+		entFlags := atomic.LoadUint64(&entAddr.flags)
 		isSafe, isEmpty, cycleEnt := loadSCQFlags(entFlags)
 		if cycleEnt < cycleT && isEmpty && (isSafe || atomic.LoadUint64(&q.head) <= T) {
 			// We can use this entry for adding new data if
