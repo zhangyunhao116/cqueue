@@ -34,7 +34,7 @@ TEXT ·loadCRQNodeUint64(SB),NOSPLIT,$0
 TEXT ·loadSCQNodePointer(SB),NOSPLIT,$0
 	JMP ·loadUint128(SB)
 
-TEXT ·compareAndSwapSCQNodePointer(SB),NOSPLIT,$0
+TEXT ·compareAndSwapSCQNodePointerBase(SB),NOSPLIT,$0
 	JMP ·compareAndSwapUint128(SB)
 
 TEXT ·compareAndSwapSCQNodeUint64(SB),NOSPLIT,$0
@@ -42,3 +42,8 @@ TEXT ·compareAndSwapSCQNodeUint64(SB),NOSPLIT,$0
 
 TEXT ·compareAndSwapCRQNodeUint64(SB),NOSPLIT,$0
 	JMP ·compareAndSwapUint128(SB)
+
+TEXT ·runtimeEnableWriteBarrier(SB),NOSPLIT,$0
+	MOVL runtime·writeBarrier(SB), AX
+	MOVB AX, res+0(FP)
+	RET
