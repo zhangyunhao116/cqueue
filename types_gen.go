@@ -41,7 +41,7 @@ func main() {
 		data = strings.Replace(data, "compareAndSwapSCQNodePointer", "compareAndSwapSCQNode"+upper, -1)
 		data = strings.Replace(data, "loadSCQNodePointer", "loadSCQNode"+upper, -1)
 		data = strings.Replace(data, "pointerSCQPool", lower+"SCQPool", -1)
-		data = strings.Replace(data, "atomic.StorePointer((*unsafe.Pointer)(unsafe.Pointer(entAddr)), nil)", "atomic.StoreUint64(&entAddr.data, 0)", -1)
+		data = strings.Replace(data, "atomic.StorePointer(&entAddr.data, nil)", "atomic.StoreUint64(&entAddr.data, 0)", -1)
 		w.WriteString(data)
 		w.WriteString("\r\n")
 	}
