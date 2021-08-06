@@ -2,6 +2,7 @@ package cqueue
 
 import (
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/zhangyunhao116/fastrand"
@@ -166,4 +167,42 @@ func TestUnboundedQueue(t *testing.T) {
 	if s1.Len() != s2.Len() {
 		t.Fatal("invalid")
 	}
+}
+
+func TestCorrentnessUnique(t *testing.T) {
+	const (
+		cpucount = 16
+	)
+	var (
+		wg        sync.WaitGroup
+		shared    [cpucount * cacheLineSize]uint64
+		sharedset [cpucount]*skipset.Uint64Set
+	)
+	q := NewLSCQUint64()
+	for i := 0; i < cpucount; i++ {
+		shared[i*int(cacheLineSize)] = uint64(i) * 1 << 35
+		sharedset[i] = skipset.NewUint64()
+	}
+
+	for i := 0; i < cpucount; i++ {
+		wg.Add(1)
+		cpuid := uint64(i)
+		go func() {
+			for j := 0; j < scqsize*9; j++ {
+				if !q.Enqueue(atomic.AddUint64(&shared[cpuid*uint64(cacheLineSize)], 1)) {
+					panic("invalid")
+				}
+				data, ok := q.Dequeue()
+				if !ok {
+					panic("invalid")
+				}
+				datashared := data >> 35
+				if !sharedset[datashared].Add(data) {
+					panic("invalid")
+				}
+			}
+			wg.Done()
+		}()
+	}
+	wg.Wait()
 }

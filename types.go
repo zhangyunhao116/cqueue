@@ -182,7 +182,8 @@ func (q *SCQUint64) Dequeue() (data uint64, ok bool) {
 		isSafe, isEmpty, cycleEnt := loadSCQFlags(ent.flags)
 		if cycleEnt == cycleH { // same cycle, return this entry directly
 			// We need to clear entry's data.
-			compareAndSwapSCQNodeUint64(entAddr, ent, scqNodeUint64{flags: newSCQFlags(isSafe, true, cycleEnt)})
+			atomic.StoreUint64(&entAddr.data, 0)
+			atomicx.BitSetUint64(&entAddr.flags, 62)
 			return ent.data, true
 		}
 		if cycleEnt < cycleH {

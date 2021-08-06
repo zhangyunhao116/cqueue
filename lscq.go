@@ -181,7 +181,8 @@ func (q *SCQPointer) Dequeue() (data unsafe.Pointer, ok bool) {
 		isSafe, isEmpty, cycleEnt := loadSCQFlags(ent.flags)
 		if cycleEnt == cycleH { // same cycle, return this entry directly
 			// We need to clear entry's data.
-			compareAndSwapSCQNodePointer(entAddr, ent, scqNodePointer{flags: newSCQFlags(isSafe, true, cycleEnt)})
+			atomic.StorePointer((*unsafe.Pointer)(unsafe.Pointer(entAddr)), nil)
+			atomicx.BitSetUint64(&entAddr.flags, 62)
 			return ent.data, true
 		}
 		if cycleEnt < cycleH {
