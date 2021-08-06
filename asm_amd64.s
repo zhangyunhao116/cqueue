@@ -43,6 +43,13 @@ TEXT ·compareAndSwapSCQNodeUint64(SB),NOSPLIT,$0
 TEXT ·compareAndSwapCRQNodeUint64(SB),NOSPLIT,$0
 	JMP ·compareAndSwapUint128(SB)
 
+TEXT ·resetNode(SB),NOSPLIT,$0
+	MOVQ addr+0(FP), DX
+	LOCK
+	BTSQ $62, (DX)
+	MOVQ $0, 8(DX)
+	RET
+
 TEXT ·runtimeEnableWriteBarrier(SB),NOSPLIT,$0
 	MOVL runtime·writeBarrier(SB), AX
 	MOVB AX, res+0(FP)
