@@ -34,7 +34,7 @@ TEXT ·loadCRQNodeUint64(SB),NOSPLIT,$0
 TEXT ·loadSCQNodePointer(SB),NOSPLIT,$0
 	JMP ·loadUint128(SB)
 
-TEXT ·compareAndSwapSCQNodePointerBase(SB),NOSPLIT,$0
+TEXT ·compareAndSwapSCQNodePointer(SB),NOSPLIT,$0
 	JMP ·compareAndSwapUint128(SB)
 
 TEXT ·compareAndSwapSCQNodeUint64(SB),NOSPLIT,$0

@@ -14,7 +14,7 @@ func loadSCQNodePointer(addr unsafe.Pointer) (val scqNodePointer)
 
 func loadSCQNodeUint64(addr unsafe.Pointer) (val scqNodeUint64)
 
-func compareAndSwapSCQNodePointerBase(addr *scqNodePointer, old, new scqNodePointer) (swapped bool)
+func compareAndSwapSCQNodePointer(addr *scqNodePointer, old, new scqNodePointer) (swapped bool)
 
 func compareAndSwapSCQNodeUint64(addr *scqNodeUint64, old, new scqNodeUint64) (swapped bool)
 
