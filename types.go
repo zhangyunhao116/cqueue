@@ -184,6 +184,7 @@ func (q *SCQUint64) Dequeue() (data uint64, ok bool) {
 			// 1. Clear the data in this slot.
 			// 2. Set `isEmpty` to 1
 			resetNode(unsafe.Pointer(entAddr))
+
 			return ent.data, true
 		}
 		if cycleEnt < cycleH {

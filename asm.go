@@ -9,10 +9,12 @@ import "unsafe"
 // 	return sync_atomic_CompareAndSwapUintptr((*uintptr)(noescape(unsafe.Pointer(ptr))), uintptr(old), uintptr(new))
 // }
 func compareAndSwapSCQNodePointer(addr *scqNodePointer, old, new scqNodePointer) (swapped bool) {
+	// TODO: Reconsider the GC write barrier.
 	if runtimeEnableWriteBarrier() {
-		runtimeatomicwb((*unsafe.Pointer)(&addr.data), new.data)
+		runtimeatomicwb(&addr.data, new.data)
 	}
-	return compareAndSwapSCQNodePointerBase((*scqNodePointer)(runtimenoescape(unsafe.Pointer(addr))), old, new)
+	// TODO: Pure assembly doesn't need `noescape`? since addr is a leaking param.
+	return compareAndSwapSCQNodePointerBase(addr, old, new)
 }
 
 func runtimeEnableWriteBarrier() bool

@@ -182,7 +182,8 @@ func (q *SCQPointer) Dequeue() (data unsafe.Pointer, ok bool) {
 		if cycleEnt == cycleH { // same cycle, return this entry directly
 			// 1. Clear the data in this slot.
 			// 2. Set `isEmpty` to 1
-			resetNode(unsafe.Pointer(entAddr))
+			atomic.StorePointer(&entAddr.data, nil)
+			atomicx.BitSetUint64(&entAddr.flags, 62)
 			return ent.data, true
 		}
 		if cycleEnt < cycleH {
