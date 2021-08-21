@@ -16,7 +16,7 @@ type benchTask struct {
 	New  func() uint64queue
 }
 
-func BenchmarkDefault(b *testing.B) {
+func BenchmarkUint64(b *testing.B) {
 	all := []benchTask{{
 		name: "LSCQ", New: func() uint64queue {
 			return NewLSCQUint64()

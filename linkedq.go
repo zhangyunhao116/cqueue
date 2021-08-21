@@ -1,6 +1,9 @@
 package cqueue
 
-import "sync"
+import (
+	"sync"
+	"unsafe"
+)
 
 type LQUint64 struct {
 	head *lqNodeUint64
@@ -31,6 +34,43 @@ func (q *LQUint64) Dequeue() (uint64, bool) {
 	if q.head.next == nil {
 		q.mu.Unlock()
 		return 0, false
+	} else {
+		value := q.head.next.value
+		q.head = q.head.next
+		q.mu.Unlock()
+		return value, true
+	}
+}
+
+type LQPointer struct {
+	head *lqNodePointer
+	tail *lqNodePointer
+	mu   sync.Mutex
+}
+
+type lqNodePointer struct {
+	value unsafe.Pointer
+	next  *lqNodePointer
+}
+
+func NewLQPointer() *LQPointer {
+	node := new(lqNodePointer)
+	return &LQPointer{head: node, tail: node}
+}
+
+func (q *LQPointer) Enqueue(value unsafe.Pointer) bool {
+	q.mu.Lock()
+	q.tail.next = &lqNodePointer{value: value}
+	q.tail = q.tail.next
+	q.mu.Unlock()
+	return true
+}
+
+func (q *LQPointer) Dequeue() (unsafe.Pointer, bool) {
+	q.mu.Lock()
+	if q.head.next == nil {
+		q.mu.Unlock()
+		return nil, false
 	} else {
 		value := q.head.next.value
 		q.head = q.head.next

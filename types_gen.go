@@ -41,6 +41,7 @@ func main() {
 		data = strings.Replace(data, "compareAndSwapSCQNodePointer", "compareAndSwapSCQNode"+upper, -1)
 		data = strings.Replace(data, "loadSCQNodePointer", "loadSCQNode"+upper, -1)
 		data = strings.Replace(data, "pointerSCQPool", lower+"SCQPool", -1)
+		data = strings.Replace(data, "atomicWriteBarrier(&entAddr.data)", "", -1)
 		w.WriteString(data)
 		w.WriteString("\r\n")
 	}
