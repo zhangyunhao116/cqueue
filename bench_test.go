@@ -21,18 +21,18 @@ func BenchmarkUint64(b *testing.B) {
 		name: "LSCQ", New: func() uint64queue {
 			return NewLSCQUint64()
 		}}}
-	// all = append(all, benchTask{
-	// 	name: "LinkedQueue",
-	// 	New: func() uint64queue {
-	// 		return NewLQUint64()
-	// 	},
-	// })
-	// all = append(all, benchTask{
-	// 	name: "MSQueue",
-	// 	New: func() uint64queue {
-	// 		return NewMSQUint64()
-	// 	},
-	// })
+	all = append(all, benchTask{
+		name: "LinkedQueue",
+		New: func() uint64queue {
+			return NewLQUint64()
+		},
+	})
+	all = append(all, benchTask{
+		name: "MSQueue",
+		New: func() uint64queue {
+			return NewMSQUint64()
+		},
+	})
 	benchEnqueueOnly(b, all)
 	benchDequeueOnlyEmpty(b, all)
 	benchPair(b, all)

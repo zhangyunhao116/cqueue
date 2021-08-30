@@ -22,18 +22,18 @@ func BenchmarkPointer(b *testing.B) {
 		name: "LSCQ", New: func() pointerqueue {
 			return NewLSCQPointer()
 		}}}
-	// all = append(all, benchTaskPointer{
-	// 	name: "LinkedQueue",
-	// 	New: func() pointerqueue {
-	// 		return NewLQPointer()
-	// 	},
-	// })
-	// all = append(all, benchTaskPointer{
-	// 	name: "MSQueue",
-	// 	New: func() pointerqueue {
-	// 		return NewMSQUint64()
-	// 	},
-	// })
+	all = append(all, benchTaskPointer{
+		name: "LinkedQueue",
+		New: func() pointerqueue {
+			return NewLQPointer()
+		},
+	})
+	all = append(all, benchTaskPointer{
+		name: "MSQueue",
+		New: func() pointerqueue {
+			return NewMSQPointer()
+		},
+	})
 	benchEnqueueOnlyPointer(b, all)
 	benchDequeueOnlyEmptyPointer(b, all)
 	benchPairPointer(b, all)

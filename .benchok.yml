@@ -1,0 +1,21 @@
+base:
+  file: "base.txt"
+  run: "go run types_gen.go && go test -bench=.+/.+/LSCQ -cpu=1,4,8,16,100 -count=10 -run=NOTEST -benchtime=1000000x > base.txt"
+  ignore: "DequeueOnlyEmpty"
+  maxerr: 15
+
+cmp:
+  file: "latest.txt"
+  beforerun: "rm -f -- latest.txt"
+  run: "go run types_gen.go && go test -bench=.+/.+/LSCQ -cpu=1,4,8,16,100 -count=10 -run=NOTEST -benchtime=1000000x > latest.txt"
+  afterrun: "benchstat base.txt latest.txt"
+  ignore: "DequeueOnlyEmpty"
+  maxerr: 20
+
+release:
+  file: "release.txt"
+  beforerun: "rm -f -- release.txt"
+  run: "go run types_gen.go && go test -bench=. -cpu=1,4,8,16,100 -count=10 -run=NOTEST -benchtime=1000000x > release.txt"
+  afterrun: "benchstat release.txt"
+  ignore: "DequeueOnlyEmpty"
+  maxerr: 30
