@@ -23,9 +23,9 @@ TEXT ·loadSCQNodePointer(SB),NOSPLIT,$0
 
 TEXT ·resetNode(SB),NOSPLIT,$0
 	MOVQ addr+0(FP), DX
+	MOVQ $0, 8(DX)
 	LOCK
 	BTSQ $62, (DX)
-	MOVQ $0, 8(DX)
 	RET
 
 TEXT ·runtimeEnableWriteBarrier(SB),NOSPLIT,$0
