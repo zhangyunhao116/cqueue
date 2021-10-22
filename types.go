@@ -91,6 +91,23 @@ func (q *LSCQUint64) Enqueue(data uint64) bool {
 	}
 }
 
+// Len returns an *estimated* length of the LSCQ.
+// WARNING: the returned length could be inaccurate even when
+// none of the goroutines use it.
+func (q *LSCQUint64) Len() int {
+	var l int
+	cq := (*SCQUint64)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&q.head))))
+	for {
+		l += cq.Len()
+		// Equal to `cq = cq.next`.
+		cq = (*SCQUint64)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&cq.next))))
+		if cq == nil {
+			break
+		}
+	}
+	return l
+}
+
 func NewSCQUint64() *SCQUint64 {
 	ring := new([scqsize]scqNodeUint64)
 	for i := range ring {
@@ -229,4 +246,20 @@ func (q *SCQUint64) fixstate(originalHead uint64) {
 			return
 		}
 	}
+}
+
+// Len returns an *estimated* length of the SCQ.
+// WARNING: the returned length could be inaccurate even when
+// only one goroutine uses it.
+func (q *SCQUint64) Len() int {
+	_, tail := uint64GetAll(atomic.LoadUint64(&q.tail))
+	head := atomic.LoadUint64(&q.head)
+	if head >= tail {
+		return 0
+	}
+	l := int(tail - head)
+	if l > scqsize {
+		return scqsize
+	}
+	return l
 }

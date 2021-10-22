@@ -10,6 +10,23 @@ import (
 	"github.com/zhangyunhao116/skipset"
 )
 
+func TestLength(t *testing.T) {
+	const count = 100000
+	q := NewLSCQUint64()
+	for i := 0; i < count; i++ {
+		q.Enqueue(uint64(i))
+	}
+	if q.Len() != count {
+		t.Fatal()
+	}
+	for i := 0; i < count; i++ {
+		q.Dequeue()
+	}
+	if q.Len() != 0 {
+		t.Fatal()
+	}
+}
+
 func TestBoundedQueue(t *testing.T) {
 	q := NewSCQUint64()
 	s := skipset.NewUint64()
@@ -19,6 +36,9 @@ func TestBoundedQueue(t *testing.T) {
 	if ok {
 		t.Fatal(val)
 	}
+	if q.Len() != 0 {
+		t.Fatal()
+	}
 
 	// Single goroutine correctness.
 	for i := 0; i < scqsize; i++ {
@@ -26,6 +46,10 @@ func TestBoundedQueue(t *testing.T) {
 			t.Fatal(i)
 		}
 		s.Add(uint64(i))
+	}
+
+	if q.Len() != s.Len() {
+		t.Fatal()
 	}
 
 	if q.Enqueue(20) { // queue is full
@@ -44,7 +68,9 @@ func TestBoundedQueue(t *testing.T) {
 	if ok {
 		t.Fatal(val)
 	}
-
+	if q.Len() != 0 {
+		t.Fatal()
+	}
 	// ---------- MULTIPLE TEST BEGIN ----------.
 	for j := 0; j < 10; j++ {
 		s = skipset.NewUint64()
@@ -105,6 +131,16 @@ func TestBoundedQueue(t *testing.T) {
 	}
 	wg.Wait()
 
+	if s1.Len() > s2.Len() {
+		if s1.Len()-s2.Len() != q.Len() {
+			t.Fatal()
+		}
+	} else {
+		if q.Len() != 0 {
+			t.Fatal()
+		}
+	}
+
 	for {
 		val, ok := q.Dequeue()
 		if !ok {
@@ -149,6 +185,16 @@ func TestUnboundedQueue(t *testing.T) {
 		}()
 	}
 	wg.Wait()
+
+	if s1.Len() > s2.Len() {
+		if s1.Len()-s2.Len() != q.Len() {
+			t.Fatal()
+		}
+	} else {
+		if q.Len() != 0 {
+			t.Fatal()
+		}
+	}
 
 	for {
 		val, ok := q.Dequeue()

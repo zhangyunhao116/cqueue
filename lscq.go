@@ -90,6 +90,23 @@ func (q *LSCQPointer) Enqueue(data unsafe.Pointer) bool {
 	}
 }
 
+// Len returns an *estimated* length of the LSCQ.
+// WARNING: the returned length could be inaccurate even when
+// none of the goroutines use it.
+func (q *LSCQPointer) Len() int {
+	var l int
+	cq := (*SCQPointer)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&q.head))))
+	for {
+		l += cq.Len()
+		// Equal to `cq = cq.next`.
+		cq = (*SCQPointer)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&cq.next))))
+		if cq == nil {
+			break
+		}
+	}
+	return l
+}
+
 func NewSCQPointer() *SCQPointer {
 	ring := new([scqsize]scqNodePointer)
 	for i := range ring {
@@ -228,4 +245,20 @@ func (q *SCQPointer) fixstate(originalHead uint64) {
 			return
 		}
 	}
+}
+
+// Len returns an *estimated* length of the SCQ.
+// WARNING: the returned length could be inaccurate even when
+// only one goroutine uses it.
+func (q *SCQPointer) Len() int {
+	_, tail := uint64GetAll(atomic.LoadUint64(&q.tail))
+	head := atomic.LoadUint64(&q.head)
+	if head >= tail {
+		return 0
+	}
+	l := int(tail - head)
+	if l > scqsize {
+		return scqsize
+	}
+	return l
 }
