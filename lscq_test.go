@@ -10,6 +10,145 @@ import (
 	"github.com/zhangyunhao116/skipset"
 )
 
+func TestRange(t *testing.T) {
+	q := NewLSCQUint64()
+
+	// Test traverse static queue.
+	for _, count := range []int{10, scqsize, scqsize*2 + 100} {
+		for i := 1; i < count; i++ {
+			q.Enqueue(uint64(i))
+		}
+		// Traverse all items.
+		var tmp int
+		i := uint64(1)
+		q.Range(func(data uint64) bool {
+			tmp++
+			if i != data {
+				t.Fatal("times:", tmp, "testlen:", count, "want:", i, "got:", data)
+			}
+			i++
+			return true
+		})
+		// Dequeue all items.
+		for i := 1; i < count; i++ {
+			data, ok := q.Dequeue()
+			if !ok || uint64(i) != data {
+				t.Fatal()
+			}
+		}
+		// Traverse empty LSCQ.
+		q.Range(func(_ uint64) bool {
+			t.Fatal()
+			return true
+		})
+	}
+
+	// Test traverse dynamic queue(Range+enqueue).
+	for _, count := range []int{10, scqsize, scqsize*2 + 100} {
+		for i := 1; i <= count; i++ {
+			q.Enqueue(uint64(i))
+		}
+		var (
+			i uint64 = 1 // values saver
+			j uint64     // items counter
+		)
+		q.Range(func(data uint64) bool {
+			if i != data {
+				t.Fatal(count, i, data)
+			}
+			if i == uint64(count) {
+				q.Dequeue() // meaningless, because we have traverse the first item
+				q.Enqueue(uint64(count) + 1)
+			}
+			i++
+			j++
+			return true
+		})
+		if j != uint64(count)+1 {
+			t.Fatal()
+		}
+		// Clear the LSCQ.
+		for {
+			_, ok := q.Dequeue()
+			if !ok {
+				break
+			}
+		}
+	}
+
+	// Test traverse dynamic queue(Range+dequeue).
+	for _, count := range []int{10, scqsize, scqsize*2 + 100} {
+		for i := 1; i <= count; i++ {
+			q.Enqueue(uint64(i))
+		}
+		var (
+			clear           bool
+			countAfterClear int
+		)
+		q.Range(func(_ uint64) bool {
+			if !clear {
+				for i := 0; i < count-1; i++ {
+					q.Dequeue()
+				}
+				clear = true
+				return true
+			}
+			if clear {
+				countAfterClear++
+			}
+			return true
+		})
+		if countAfterClear != 1 {
+			t.Fatal(count, countAfterClear)
+		}
+
+		// Clear the LSCQ.
+		for {
+			_, ok := q.Dequeue()
+			if !ok {
+				break
+			}
+		}
+	}
+
+	// Test traverse dynamic queue(Range+enqueue+dequeue).
+	for i := 0; i < scqsize-3; i++ {
+		q.Enqueue(uint64(10000 + i))
+	}
+	var s []uint64
+	q.Enqueue(10)
+	q.Enqueue(11)
+	q.Enqueue(12)
+	q.Enqueue(13)
+	q.Range(func(data uint64) bool {
+		if data >= 10000 {
+			q.Dequeue()
+			return true
+		}
+		s = append(s, data)
+		if data == 10 {
+			q.Dequeue() // 10
+			q.Dequeue() // 11
+			q.Dequeue() // 12
+			return true
+		}
+		if data == 13 {
+			q.Enqueue(14)
+			q.Enqueue(15)
+			return true
+		}
+		if data == 14 {
+			q.Dequeue() // 15
+		}
+		return true
+	})
+	for i, v := range []uint64{10, 13, 14} {
+		if s[i] != v {
+			t.Fatal(i, s[i], v)
+		}
+	}
+}
+
 func TestLength(t *testing.T) {
 	const count = 100000
 	q := NewLSCQUint64()

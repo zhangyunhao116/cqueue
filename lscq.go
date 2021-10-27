@@ -107,6 +107,18 @@ func (q *LSCQPointer) Len() int {
 	return l
 }
 
+func (q *LSCQPointer) Range(f func(data unsafe.Pointer) bool) {
+	cq := (*SCQPointer)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&q.head))))
+	for {
+		cq.Range(f)
+		// Equal to `cq = cq.next`.
+		cq = (*SCQPointer)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&cq.next))))
+		if cq == nil {
+			break
+		}
+	}
+}
+
 func NewSCQPointer() *SCQPointer {
 	ring := new([scqsize]scqNodePointer)
 	for i := range ring {
@@ -261,4 +273,50 @@ func (q *SCQPointer) Len() int {
 		return scqsize
 	}
 	return l
+}
+
+// Range !! Experimental API !!
+func (q *SCQPointer) Range(f func(data unsafe.Pointer) bool) {
+	head := atomic.LoadUint64(&q.head)
+	_, tail := uint64GetAll(atomic.LoadUint64(&q.tail))
+	if head >= tail {
+		return
+	}
+	// Traverse until arriving latest tail.
+	// [head]   is the first one.
+	// [tail-1] is the last one.
+rangeTraverse:
+	traverseTimes := tail - head
+	if traverseTimes > scqsize {
+		traverseTimes = scqsize
+	}
+	cycleH := head / scqsize
+	for i := uint64(0); i < traverseTimes; i++ {
+		entAddr := &q.ring[cacheRemap16Byte(head+i)]
+		ent := loadSCQNodePointer(unsafe.Pointer(entAddr))
+		_, isEmpty, cycle := loadSCQFlags(ent.flags)
+		if isEmpty {
+			// This item has been dequeued.
+			continue
+		}
+		if cycleH > cycle {
+			nowhead := atomic.LoadUint64(&q.head)
+			if nowhead >= tail {
+				break
+			}
+			head = nowhead
+			goto rangeTraverse
+		}
+		if !f(ent.data) {
+			return
+		}
+	}
+	closed, newtail := uint64GetAll(atomic.LoadUint64(&q.tail))
+	if closed || newtail == tail {
+		return
+	} else {
+		head = tail
+		tail = newtail
+		goto rangeTraverse
+	}
 }
