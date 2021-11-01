@@ -119,6 +119,21 @@ func (q *LSCQPointer) Range(f func(data unsafe.Pointer) bool) {
 	}
 }
 
+func (q *LSCQPointer) Peek() (data unsafe.Pointer, ok bool) {
+	cq := (*SCQPointer)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&q.head))))
+	for {
+		data, ok = cq.Peek()
+		if ok {
+			return
+		}
+		// Equal to `cq = cq.next`.
+		cq = (*SCQPointer)(atomic.LoadPointer((*unsafe.Pointer)(unsafe.Pointer(&cq.next))))
+		if cq == nil {
+			return
+		}
+	}
+}
+
 func NewSCQPointer() *SCQPointer {
 	ring := new([scqsize]scqNodePointer)
 	for i := range ring {
@@ -318,5 +333,22 @@ rangeTraverse:
 		head = tail
 		tail = newtail
 		goto rangeTraverse
+	}
+}
+
+// Peek !! Experimental API !!
+func (q *SCQPointer) Peek() (data unsafe.Pointer, ok bool) {
+	for {
+		head := atomic.LoadUint64(&q.head)
+		entAddr := &q.ring[cacheRemap16Byte(head)]
+		ent := loadSCQNodePointer(unsafe.Pointer(entAddr))
+		_, isEmpty, _ := loadSCQFlags(ent.flags)
+		if !isEmpty {
+			return ent.data, true
+		}
+		_, tail := uint64GetAll(atomic.LoadUint64(&q.tail))
+		if head >= tail {
+			return
+		}
 	}
 }

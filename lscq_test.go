@@ -10,6 +10,27 @@ import (
 	"github.com/zhangyunhao116/skipset"
 )
 
+func TestPeek(t *testing.T) {
+	q := NewLSCQUint64()
+	q.Enqueue(100)
+	data, ok := q.Peek()
+	if !ok || data != 100 {
+		t.Fatal()
+	}
+	q.Dequeue()
+	_, ok = q.Peek()
+	if ok {
+		t.Fatal()
+	}
+	for i := 0; i < scqsize+1; i++ {
+		q.Enqueue(uint64(i) + 1)
+	}
+	data, ok = q.Peek()
+	if !ok || data != 1 {
+		t.Fatal(data, ok)
+	}
+}
+
 func TestRange(t *testing.T) {
 	q := NewLSCQUint64()
 
